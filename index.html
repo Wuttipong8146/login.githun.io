@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ล็อคอิน LIFF</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        h3 {
+            margin-top: 30px;
+            color: #ff6f61;
+        }
+        div {
+            max-width: 400px;
+            margin: auto;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            border: 2px solid #ff6f61;
+        }
+        h2 {
+            color: #ff6f61;
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-align: left;
+            color: #ff6f61;
+        }
+        input {
+            padding: 10px;
+            border: 1px solid #ff6f61;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+        input:focus {
+            border-color: #ff3b30;
+        }
+        button {
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background-color: #ff6f61;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #ff3b30;
+        }
+        #reset-form {
+            display: none;
+        }
+        #loader {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            color: #ff6f61;
+            text-align: center;
+            padding-top: 20%;
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="loader">กรุณารอ...</div>
+
+    <h3>ล็อคอินเพื่อเข้าใช้งาน PIA Q&A</h3>
+
+    <div id="login-form">
+        <h2>เข้าสู่ระบบ</h2>
+        <form id="loginForm">
+            <label for="employeeId">เลขประจำตัวพนักงาน:</label>
+            <input type="text" id="employeeId" name="employeeId" required autocapitalize="none" placeholder="ตัวอย่าง: pia-9999">
+            <label for="password">รหัสผ่าน:</label>
+            <input type="password" id="password" name="password" required autocapitalize="none" placeholder="รหัสแรกเข้า: 0000">
+            <button type="submit">เข้าสู่ระบบ</button>
+        </form>
+    </div>
+
+    <div id="reset-form">
+        <h2>ตั้งค่ารหัสผ่านใหม่</h2>
+        <form id="resetForm">
+            <label for="newPassword">รหัสผ่านใหม่:</label>
+            <input type="password" id="newPassword" name="newPassword" required>
+            <button type="submit">บันทึกรหัสผ่านใหม่</button>
+        </form>
+    </div>
+
+    <script>
+        async function main() {
+            await liff.init({ liffId: "2006263670-vXqxqK3k" });
+
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            } else {
+                const profile = await liff.getProfile();
+                document.getElementById('login-form').style.display = 'block';
+
+                document.getElementById('loginForm').addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    document.getElementById('loader').style.display = 'block'; // แสดงกราฟฟิกโหลด
+
+                    const employeeId = document.getElementById('employeeId').value;
+                    const password = document.getElementById('password').value;
+
+                    try {
+                        const response = await fetch('https://0d2d-115-31-154-130.ngrok-free.app/line-chatbot-9a9b0/us-central1/login', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                employeeId: employeeId,
+                                password: password,
+                                userId: profile.userId
+                            })
+                        });
+
+                        const result = await response.text();
+                        document.getElementById('loader').style.display = 'none'; // ซ่อนกราฟฟิกโหลด
+
+                        if (result.includes("กรุณาตั้งรหัสผ่านใหม่")) {
+                            document.getElementById('login-form').style.display = 'none';
+                            document.getElementById('reset-form').style.display = 'block';
+
+                            document.getElementById('resetForm').addEventListener('submit', async (event) => {
+                                event.preventDefault();
+                                document.getElementById('loader').style.display = 'block'; // แสดงกราฟฟิกโหลด
+
+                                const newPassword = document.getElementById('newPassword').value;
+
+                                try {
+                                    const resetResponse = await fetch('https://0d2d-115-31-154-130.ngrok-free.app/line-chatbot-9a9b0/us-central1/savePassword', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            userId: profile.userId,
+                                            employeeId: employeeId,
+                                            newPassword: newPassword
+                                        })
+                                    });
+
+                                    const resetResult = await resetResponse.text();
+                                    document.getElementById('loader').style.display = 'none'; // ซ่อนกราฟฟิกโหลด
+                                    alert(resetResult);
+
+                                    // ปิด LIFF window เมื่อสำเร็จ
+                                    liff.closeWindow(); 
+                                } catch (error) {
+                                    console.error("Error:", error);
+                                    document.getElementById('loader').style.display = 'none'; // ซ่อนกราฟฟิกโหลด
+                                    alert("เกิดข้อผิดพลาดในการบันทึกรหัสผ่าน");
+                                }
+                            });
+                        } else if (result === "เข้าสู่ระบบสำเร็จ") {
+                            alert("ยินดีต้อนรับเข้าสู่ระบบ");
+                            liff.closeWindow(); // ปิด LIFF window เมื่อสำเร็จ
+                        } else {
+                            alert(result);
+                        }
+                    } catch (error) {
+                        console.error("Error:", error);
+                        document.getElementById('loader').style.display = 'none'; // ซ่อนกราฟฟิกโหลด
+                        alert("เกิดข้อผิดพลาดในการเข้าสู่ระบบ");
+                    }
+                });
+            }
+        }
+
+        main();
+    </script>
+</body>
+</html>
