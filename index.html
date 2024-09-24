@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ล็อคอินPIA Chat BOt</title>
+    <title>ล็อคอิน LIFF</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js"></script>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -116,7 +115,7 @@
     </div>
 
     <script>
-        // Firebase configuration
+        // Firebase config
         const firebaseConfig = {
             apiKey: "AIzaSyBoKc95BbIYYGUKk1kyTdaVssnBUspTHaU",
             authDomain: "line-chatbot-9a9b0.firebaseapp.com",
@@ -127,8 +126,8 @@
         };
 
         // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore(app);
 
         async function main() {
             await liff.init({ liffId: "2006263670-vXqxqK3k" });
@@ -147,44 +146,41 @@
                     const password = document.getElementById('password').value;
 
                     try {
-                        const userRef = db.collection('users').doc(employeeId);
+                        const userRef = db.collection("users").doc(employeeId);
                         const userDoc = await userRef.get();
-                        
-                            if (userDoc.exists && userDoc.data().password === password) {
-                                if (!userDoc.data().userId) {  // ตรวจสอบว่า userId ยังว่างอยู่
-                                    document.getElementById('login-form').style.display = 'none';
-                                    document.getElementById('reset-form').style.display = 'block';
-                            
-                                    document.getElementById('resetForm').addEventListener('submit', async (event) => {
-                                        event.preventDefault();
-                                        document.getElementById('loader').style.display = 'block'; // Show loader
-                            
-                                        const newPassword = document.getElementById('newPassword').value;
-                            
-                                        await userRef.update({
-                                            password: newPassword,
-                                            userId: profile.userId  // บันทึก userId ของผู้ใช้ที่ล็อคอิน
-                                        });
-                            
-                                        document.getElementById('loader').style.display = 'none'; // Hide loader
-                                        alert('รหัสผ่านใหม่ถูกบันทึกแล้ว');
-                                        liff.closeWindow();
+
+                        if (userDoc.exists && userDoc.data().password === password) {
+                            if (!userDoc.data().userId) {  // ตรวจสอบว่า userId ยังว่างอยู่
+                                document.getElementById('login-form').style.display = 'none';
+                                document.getElementById('reset-form').style.display = 'block';
+
+                                document.getElementById('resetForm').addEventListener('submit', async (event) => {
+                                    event.preventDefault();
+                                    document.getElementById('loader').style.display = 'block'; // Show loader
+
+                                    const newPassword = document.getElementById('newPassword').value;
+
+                                    await userRef.update({
+                                        password: newPassword,
+                                        userId: profile.userId  // บันทึก userId ของผู้ใช้ที่ล็อคอิน
                                     });
-                                } else {
-                                    alert("ยินดีต้อนรับเข้าสู่ระบบ");
+
+                                    document.getElementById('loader').style.display = 'none'; // Hide loader
+                                    alert('รหัสผ่านใหม่ถูกบันทึกแล้ว');
                                     liff.closeWindow();
-                                }
+                                });
                             } else {
-                                alert('รหัสผ่านไม่ถูกต้อง');
+                                alert("ยินดีต้อนรับเข้าสู่ระบบ");
+                                liff.closeWindow();
                             }
-                        
+                        } else {
+                            alert('รหัสผ่านไม่ถูกต้อง');
                         }
                     } catch (error) {
                         console.error("Error:", error);
+                        document.getElementById('loader').style.display = 'none'; // Hide loader
                         alert("เกิดข้อผิดพลาดในการเข้าสู่ระบบ");
                     }
-
-                    document.getElementById('loader').style.display = 'none'; // Hide loader
                 });
             }
         }
