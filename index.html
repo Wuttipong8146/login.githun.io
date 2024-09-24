@@ -149,34 +149,35 @@
                     try {
                         const userRef = db.collection('users').doc(employeeId);
                         const userDoc = await userRef.get();
-
-                        if (userDoc.exists && userDoc.data().password === password) {
-                            if (!userDoc.data().isPasswordChanged) {
-                                document.getElementById('login-form').style.display = 'none';
-                                document.getElementById('reset-form').style.display = 'block';
-
-                                document.getElementById('resetForm').addEventListener('submit', async (event) => {
-                                    event.preventDefault();
-                                    document.getElementById('loader').style.display = 'block'; // Show loader
-
-                                    const newPassword = document.getElementById('newPassword').value;
-
-                                    await userRef.update({
-                                        password: newPassword,
-                                        isPasswordChanged: true,
-                                        userId: profile.userId
+                        
+                            if (userDoc.exists && userDoc.data().password === password) {
+                                if (!userDoc.data().userId) {  // ตรวจสอบว่า userId ยังว่างอยู่
+                                    document.getElementById('login-form').style.display = 'none';
+                                    document.getElementById('reset-form').style.display = 'block';
+                            
+                                    document.getElementById('resetForm').addEventListener('submit', async (event) => {
+                                        event.preventDefault();
+                                        document.getElementById('loader').style.display = 'block'; // Show loader
+                            
+                                        const newPassword = document.getElementById('newPassword').value;
+                            
+                                        await userRef.update({
+                                            password: newPassword,
+                                            userId: profile.userId  // บันทึก userId ของผู้ใช้ที่ล็อคอิน
+                                        });
+                            
+                                        document.getElementById('loader').style.display = 'none'; // Hide loader
+                                        alert('รหัสผ่านใหม่ถูกบันทึกแล้ว');
+                                        liff.closeWindow();
                                     });
-
-                                    document.getElementById('loader').style.display = 'none'; // Hide loader
-                                    alert('รหัสผ่านใหม่ถูกบันทึกแล้ว');
+                                } else {
+                                    alert("ยินดีต้อนรับเข้าสู่ระบบ");
                                     liff.closeWindow();
-                                });
+                                }
                             } else {
-                                alert("ยินดีต้อนรับเข้าสู่ระบบ");
-                                liff.closeWindow();
+                                alert('รหัสผ่านไม่ถูกต้อง');
                             }
-                        } else {
-                            alert('รหัสผ่านไม่ถูกต้อง');
+                        
                         }
                     } catch (error) {
                         console.error("Error:", error);
